@@ -96,7 +96,12 @@ def get_flow(
             ]
         )
 
-        transform = transforms.CompositeTransform([standardizing_transform, transform,])
+        transform = transforms.CompositeTransform(
+            [
+                standardizing_transform,
+                transform,
+            ]
+        )
 
         distribution = distributions_.StandardNormal((features,))
         neural_net = flows.Flow(transform, distribution, embedding)
@@ -246,7 +251,10 @@ def train_flow(
         sampler=SubsetRandomSampler(val_indices),
     )
 
-    optimizer = optim.Adam(list(flow.parameters()), lr=learning_rate,)
+    optimizer = optim.Adam(
+        list(flow.parameters()),
+        lr=learning_rate,
+    )
     # Keep track of best_validation log_prob seen so far.
     best_validation_log_prob = -1e100
     # Keep track of number of epochs since last improvement.
@@ -330,10 +338,12 @@ class FlowWrapper:
         parameters_unconstrained = self.transform(parameters_constrained)
         log_probs = self.flow.log_prob(parameters_unconstrained)
         log_probs += torch.sum(
+            # Returns 1D tensor in case of single parameter in which case axis=1
+            # below would fail.
             self.transform.log_abs_det_jacobian(
                 parameters_constrained, parameters_unconstrained
             ),
-            axis=1,
+            axis=-1,
         )
         return log_probs
 
